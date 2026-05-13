@@ -1,0 +1,1733 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+
+// ====== DATA ======
+const PLAN_START = new Date(2026, 4, 12);
+const DEKMANTEL = new Date(2026, 7, 1);
+
+const QUOTES = [
+  "Cada rep te acerca a Ámsterdam 🇳🇱",
+  "Dekmantel no espera. Tú tampoco",
+  "Hoy entrenas, el 1 de agosto bailas",
+  "El beat no para y tú tampoco",
+  "Sudor ahora, groove después",
+  "Tu cuerpo es el mejor sound system",
+  "No hay shortcut al dancefloor",
+  "Fase a fase, rep a rep, hasta Ámsterdam",
+  "El escenario es tuyo. Prepárate",
+  "La consistencia es el verdadero drop",
+  "Entrena como si el DJ no fuera a parar",
+  "Amsterdam te espera. No le falles",
+];
+
+const FOODS = {
+  almuerzo: [
+    { n: "Arroz integral + pechuga a la plancha + ensalada grande + aguacate", i: "🍗" },
+    { n: "Pasta integral + atún + vegetales salteados", i: "🍝" },
+    { n: "Fríjoles con arroz + carne molida + plátano maduro", i: "🫘" },
+    { n: "Lentejas guisadas + arroz + ensalada + huevo duro", i: "🥗" },
+    { n: "Pollo al horno + papa criolla + brócoli + aguacate", i: "🥑" },
+    { n: "Salmón a la plancha + arroz + espinaca salteada", i: "🐟" },
+    { n: "Wrap integral de pollo con vegetales y hummus", i: "🌯" },
+  ],
+  snack: [
+    { n: "Arepa con huevo y aguacate", i: "🫓" },
+    { n: "Frutos secos (puñado) + banano", i: "🥜" },
+    { n: "Arepa con pollo desmenuzado", i: "🍗" },
+    { n: "Almojábana + queso campesino", i: "🧀" },
+    { n: "Huevos duros (2) + frutos secos", i: "🥚" },
+    { n: "Manzana con mantequilla de maní", i: "🍏" },
+    { n: "Yogur griego sin azúcar + fruta picada", i: "🍎" },
+  ],
+  cena: [
+    { n: "Huevos revueltos con vegetales + arepa integral", i: "🍳" },
+    { n: "Sopa de lentejas con verduras variadas", i: "🥣" },
+    { n: "Ensalada grande con pollo desmenuzado + aguacate", i: "🥗" },
+    { n: "Tortilla de huevo con espinaca y champiñones", i: "🍳" },
+    { n: "Bowl de garbanzos con vegetales y aguacate", i: "🫘" },
+    { n: "Atún con vegetales salteados + papa cocida", i: "🐟" },
+    { n: "Crema de calabacín con pollo desmenuzado", i: "🥣" },
+  ]
+};
+
+const EX = {
+  upper: {
+    l: "TREN SUPERIOR", ic: "💪", tag: "Pecho · Hombros · Tríceps · Espalda · Core",
+    p: [
+      [
+        { n: "Calentamiento: movilidad + jumping jacks", s: "3-5 min", r: "—" },
+        { n: "Flexiones (rodillas si necesitas)", s: "3×8-12", r: "60s" },
+        { n: "Press de hombro c/ mancuernas", s: "3×10-12", r: "60s" },
+        { n: "Remo c/ mancuerna (c/ brazo)", s: "3×10", r: "60s" },
+        { n: "Fondos en silla (tríceps)", s: "3×8-10", r: "60s" },
+        { n: "Curl de bíceps c/ mancuernas", s: "3×12", r: "45s" },
+        { n: "Superman (espalda baja)", s: "3×12", r: "45s" },
+        { n: "Plancha frontal", s: "3×20-30s", r: "45s" },
+      ],
+      [
+        { n: "Calentamiento: movilidad + jumping jacks", s: "3-5 min", r: "—" },
+        { n: "Flexiones declinadas", s: "4×10-14", r: "50s" },
+        { n: "Press de hombro c/ mancuernas", s: "4×12-14", r: "50s" },
+        { n: "Remo c/ mancuerna (c/ brazo)", s: "4×12", r: "50s" },
+        { n: "Fondos en silla (piernas elevadas)", s: "4×10-12", r: "50s" },
+        { n: "Curl de bíceps c/ mancuernas", s: "4×14", r: "45s" },
+        { n: "Superman (espalda baja)", s: "3×15", r: "45s" },
+        { n: "Plancha frontal", s: "3×40-45s", r: "45s" },
+      ],
+      [
+        { n: "Calentamiento: movilidad + jumping jacks", s: "3-5 min", r: "—" },
+        { n: "Flexiones declinadas (circuito)", s: "4×12-15", r: "45s" },
+        { n: "Press + curl (superserie)", s: "4×12", r: "45s" },
+        { n: "Remo c/ mancuerna (c/ brazo)", s: "4×14", r: "45s" },
+        { n: "Fondos en silla (peso extra)", s: "4×12-14", r: "45s" },
+        { n: "Superman + buenos días", s: "3×15", r: "40s" },
+        { n: "Plancha c/ toque de hombro", s: "3×50-60s", r: "45s" },
+        { n: "Bicicleta abdominal", s: "3×20", r: "40s" },
+      ],
+    ]
+  },
+  bike: {
+    l: "BICICLETA", ic: "🚴", tag: "Cardio · Intervalos",
+    p: [
+      [
+        { n: "Calentamiento suave", s: "5 min", r: "—" },
+        { n: "Pedaleo moderado constante", s: "20-25 min", r: "—" },
+        { n: "Enfriamiento + estiramientos", s: "5 min", r: "—" },
+      ],
+      [
+        { n: "Calentamiento", s: "5 min", r: "—" },
+        { n: "Sprint 30s → recuperación 90s", s: "×8-10", r: "90s" },
+        { n: "Enfriamiento", s: "5 min", r: "—" },
+      ],
+      [
+        { n: "Calentamiento", s: "5 min", r: "—" },
+        { n: "Sprint 45s → recuperación 60s", s: "×10-12", r: "60s" },
+        { n: "Enfriamiento", s: "5 min", r: "—" },
+      ],
+    ]
+  },
+  lower: {
+    l: "TREN INFERIOR", ic: "🦵", tag: "Piernas · Glúteos · Core",
+    p: [
+      [
+        { n: "Calentamiento: movilidad + trote en sitio", s: "3-5 min", r: "—" },
+        { n: "Sentadillas (peso corporal)", s: "3×15", r: "60s" },
+        { n: "Zancadas alternas", s: "3×10 c/p", r: "60s" },
+        { n: "Peso muerto rumano c/ mancuernas", s: "3×12", r: "60s" },
+        { n: "Elevaciones de pantorrilla", s: "3×15", r: "45s" },
+        { n: "Puente de glúteos", s: "3×15", r: "45s" },
+        { n: "Plancha lateral", s: "3×15-20s", r: "45s" },
+      ],
+      [
+        { n: "Calentamiento: movilidad + trote en sitio", s: "3-5 min", r: "—" },
+        { n: "Sentadillas con salto", s: "4×12-15", r: "50s" },
+        { n: "Zancadas c/ mancuernas", s: "4×12 c/p", r: "50s" },
+        { n: "Peso muerto rumano c/ mancuernas", s: "4×14", r: "50s" },
+        { n: "Elevaciones de pantorrilla", s: "4×18", r: "45s" },
+        { n: "Puente de glúteos c/ peso", s: "4×18", r: "45s" },
+        { n: "Plancha lateral", s: "3×30s/lado", r: "45s" },
+      ],
+      [
+        { n: "Calentamiento: movilidad + trote en sitio", s: "3-5 min", r: "—" },
+        { n: "Sentadillas con salto (circuito)", s: "4×15-18", r: "45s" },
+        { n: "Zancadas + elevación (superserie)", s: "4×14 c/p", r: "45s" },
+        { n: "Peso muerto rumano c/ mancuernas", s: "4×15", r: "45s" },
+        { n: "Puente de glúteos c/ peso", s: "4×20", r: "40s" },
+        { n: "Plancha lateral c/ elevación", s: "3×35s", r: "45s" },
+        { n: "Bicicleta abdominal", s: "3×20", r: "40s" },
+      ],
+    ]
+  },
+  bikeL: {
+    l: "BICI LARGA", ic: "🚴‍♂️", tag: "Resistencia · Endurance",
+    p: [
+      [
+        { n: "Calentamiento", s: "5 min", r: "—" },
+        { n: "Pedaleo constante (ritmo cómodo)", s: "25-35 min", r: "—" },
+        { n: "Enfriamiento + estiramientos", s: "5 min", r: "—" },
+      ],
+      [
+        { n: "Calentamiento", s: "5 min", r: "—" },
+        { n: "Pedaleo constante moderado", s: "40-50 min", r: "—" },
+        { n: "Enfriamiento + estiramientos", s: "5 min", r: "—" },
+      ],
+      [
+        { n: "Calentamiento", s: "5 min", r: "—" },
+        { n: "Pedaleo con subidas si es posible", s: "50-60 min", r: "—" },
+        { n: "Enfriamiento + estiramientos", s: "5 min", r: "—" },
+      ],
+    ]
+  },
+  full: {
+    l: "FULL BODY", ic: "🔥", tag: "Todo el cuerpo · Core intenso",
+    p: [
+      [
+        { n: "Calentamiento: movilidad + jumping jacks", s: "3-5 min", r: "—" },
+        { n: "Burpees (sin salto si necesitas)", s: "3×6-8", r: "60s" },
+        { n: "Flexiones", s: "3×8-10", r: "60s" },
+        { n: "Sentadilla c/ mancuernas", s: "3×12", r: "60s" },
+        { n: "Press de piso c/ mancuernas", s: "3×12", r: "60s" },
+        { n: "Mountain climbers", s: "3×20", r: "45s" },
+        { n: "Crunch abdominal", s: "3×15", r: "45s" },
+        { n: "Plancha frontal", s: "3×25-30s", r: "45s" },
+      ],
+      [
+        { n: "Calentamiento: movilidad + jumping jacks", s: "3-5 min", r: "—" },
+        { n: "Burpees completos", s: "4×10", r: "50s" },
+        { n: "Flexiones declinadas", s: "4×12", r: "50s" },
+        { n: "Sentadilla con salto", s: "4×14", r: "50s" },
+        { n: "Press de piso c/ mancuernas", s: "4×14", r: "50s" },
+        { n: "Mountain climbers", s: "4×24", r: "45s" },
+        { n: "Bicicleta abdominal", s: "4×18", r: "45s" },
+        { n: "Plancha frontal", s: "3×40-45s", r: "45s" },
+      ],
+      [
+        { n: "Calentamiento: movilidad + jumping jacks", s: "3-5 min", r: "—" },
+        { n: "Burpees completos (circuito)", s: "4×12", r: "45s" },
+        { n: "Flexiones + press (superserie)", s: "4×14", r: "45s" },
+        { n: "Sentadilla con salto", s: "4×16", r: "45s" },
+        { n: "Mountain climbers", s: "4×30", r: "40s" },
+        { n: "Bicicleta abdominal", s: "4×24", r: "40s" },
+        { n: "Plancha c/ toque de hombro", s: "3×50-60s", r: "40s" },
+      ],
+    ]
+  },
+  rest: {
+    l: "DESCANSO ACTIVO", ic: "🧘", tag: "Movilidad · Recuperación",
+    p: [
+      [
+        { n: "Caminata ligera", s: "20-30 min", r: "—" },
+        { n: "Estiramientos de cuerpo completo", s: "10-15 min", r: "—" },
+        { n: "Respiración profunda", s: "5 min", r: "—" },
+      ],
+      [
+        { n: "Caminata o yoga suave", s: "30 min", r: "—" },
+        { n: "Estiramientos profundos", s: "15 min", r: "—" },
+        { n: "Opcional: bici suave (extra)", s: "20-30 min", r: "—" },
+      ],
+      [
+        { n: "Caminata o bici suave", s: "30-40 min", r: "—" },
+        { n: "Yoga / movilidad articular", s: "15-20 min", r: "—" },
+        { n: "Opcional: bici moderada (extra)", s: "30 min", r: "—" },
+      ],
+    ]
+  },
+  off: {
+    l: "DESCANSO TOTAL", ic: "😴", tag: "Recuperación completa",
+    p: [
+      [{ n: "Descansa, hidrátate, duerme bien. Tu cuerpo construye músculo hoy.", s: "—", r: "—" }],
+      [{ n: "Descansa, hidrátate, duerme bien. Tu cuerpo construye músculo hoy.", s: "—", r: "—" }],
+      [{ n: "Descansa, hidrátate, duerme bien. Tu cuerpo construye músculo hoy.", s: "—", r: "—" }],
+    ]
+  },
+};
+
+const SCHED = ["upper", "bike", "lower", "bikeL", "full", "rest", "off"];
+const DAYS = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
+const DAYS_FULL = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+const getPhase = w => w <= 3 ? 0 : w <= 7 ? 1 : 2;
+const getWeek = d => Math.max(1, Math.min(11, Math.floor((d - PLAN_START) / 864e5 / 7) + 1));
+const getDow = d => { const x = d.getDay(); return x === 0 ? 6 : x - 1; };
+const daysTo = d => Math.max(0, Math.ceil((DEKMANTEL - d) / 864e5));
+const dk = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const doy = d => Math.floor((d - new Date(d.getFullYear(),0,0)) / 864e5);
+
+const SK = "dkm-fit-v2";
+
+export default function App() {
+  const [today] = useState(new Date());
+  const [sel, setSel] = useState(new Date());
+  const [checks, setChecks] = useState({});
+  const [dark, setDark] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [anim, setAnim] = useState(false);
+  const [view, setView] = useState('daily'); // 'daily' | 'calendar' | 'metrics'
+  const [calMonth, setCalMonth] = useState(new Date());
+  const [metrics, setMetrics] = useState({});
+  const [metricForm, setMetricForm] = useState({ weight:'', waist:'', chest:'', arm:'', energy:5 });
+  const [showMetricForm, setShowMetricForm] = useState(false);
+  const [notes, setNotes] = useState({});
+  const [mealTimes, setMealTimes] = useState({ almuerzo:'12:00', snack:'15:30', cena:'19:00' });
+  const [showSettings, setShowSettings] = useState(false);
+  const [splash, setSplash] = useState(true);
+  const [splashSeen, setSplashSeen] = useState(false);
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteText, setNoteText] = useState('');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SK);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setChecks(parsed.checks || {});
+        setMetrics(parsed.metrics || {});
+        setNotes(parsed.notes || {});
+        if (parsed.mealTimes) setMealTimes(parsed.mealTimes);
+        if (parsed.dark !== undefined) setDark(parsed.dark);
+        if (parsed.splashSeen) { setSplash(false); setSplashSeen(true); }
+      }
+    } catch {}
+    setReady(true);
+    setTimeout(() => setAnim(true), 50);
+    setTimeout(() => setSplash(false), 2600);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      localStorage.setItem(SK, JSON.stringify({ checks, dark, metrics, notes, mealTimes, splashSeen: true }));
+    } catch {}
+  }, [checks, dark, metrics, notes, mealTimes, ready]);
+
+  const key = dk(sel);
+  const dow = getDow(sel);
+  const wk = getWeek(sel);
+  const ph = getPhase(wk);
+  const wkey = SCHED[dow];
+  const wo = EX[wkey];
+  const exs = wo.p[ph];
+  const left = daysTo(today);
+  const dayN = doy(sel);
+  const dc = checks[key] || {};
+  const alm = FOODS.almuerzo[dayN % 7];
+  const snk = FOODS.snack[(dayN + 2) % 7];
+  const cen = FOODS.cena[(dayN + 4) % 7];
+  const quote = QUOTES[dayN % QUOTES.length];
+  const isToday = dk(today) === key;
+
+  const isWeekend = dow >= 5;
+  const total = exs.length + (isWeekend ? 5 : 6); // 3 meals + water + protein + (ayuno on weekdays)
+  const done = isWeekend
+    ? Object.entries(dc).filter(([k2,v])=>k2!=='ay'&&v).length
+    : Object.values(dc).filter(Boolean).length;
+  const pct = Math.round((done / total) * 100);
+
+  const tog = useCallback(k => {
+    setChecks(p => ({ ...p, [key]: { ...(p[key]||{}), [k]: !(p[key]||{})[k] } }));
+  }, [key]);
+
+  const go = off => {
+    const d = new Date(sel);
+    d.setDate(d.getDate() + off);
+    setSel(d);
+  };
+
+  // Week dots - check completion of each day in current week
+  const weekStart = new Date(sel);
+  weekStart.setDate(weekStart.getDate() - dow);
+  const weekDots = Array.from({length: 7}, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    const k = dk(d);
+    const c = checks[k] || {};
+    const cnt = Object.values(c).filter(Boolean).length;
+    const wkey2 = SCHED[i];
+    const t2 = EX[wkey2].p[getPhase(getWeek(d))].length + 5;
+    return { date: d, key: k, done: cnt, total: t2, isSel: k === key, isToday: dk(today) === k };
+  });
+
+  const t = dark ? themes.dark : themes.light;
+
+  // === CALENDAR & STATS computations ===
+  const getDayCompletion = useCallback((date) => {
+    const k = dk(date);
+    const c = checks[k] || {};
+    const d = getDow(date);
+    const w = getWeek(date);
+    const p = getPhase(w);
+    const wk2 = SCHED[d];
+    const isWknd = d >= 5;
+    const totalEx = EX[wk2].p[p].length + (isWknd ? 5 : 6);
+    // On weekends, don't count ayuno check toward total
+    const filtered = isWknd ? Object.entries(c).filter(([k2])=>k2!=='ay') : Object.entries(c);
+    const doneEx = filtered.filter(([,v])=>v).length;
+    return { done: doneEx, total: totalEx, pct: totalEx > 0 ? Math.round((doneEx / totalEx) * 100) : 0 };
+  }, [checks]);
+
+  // Calendar month grid
+  const calendarDays = useMemo(() => {
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    const firstDay = new Date(y, m, 1);
+    const lastDay = new Date(y, m + 1, 0);
+    let startDow = firstDay.getDay(); // 0=Sun
+    startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0
+    const days = [];
+    // padding before
+    for (let i = 0; i < startDow; i++) days.push(null);
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(y, m, d);
+      const inPlan = date >= PLAN_START && date <= DEKMANTEL;
+      const comp = inPlan ? getDayCompletion(date) : null;
+      days.push({ date, day: d, inPlan, comp, isToday: dk(date) === dk(today) });
+    }
+    return days;
+  }, [calMonth, checks, getDayCompletion, today]);
+
+  // Stats: streak, total days completed, best week, completion rate
+  const stats = useMemo(() => {
+    // All plan days from start to today
+    const planDays = [];
+    const d = new Date(PLAN_START);
+    const end = new Date(Math.min(today.getTime(), DEKMANTEL.getTime()));
+    while (d <= end) {
+      planDays.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
+
+    let currentStreak = 0, bestStreak = 0, tempStreak = 0;
+    let completedDays = 0, partialDays = 0;
+
+    // week tracking
+    const weekScores = {};
+
+    planDays.forEach(day => {
+      const c = getDayCompletion(day);
+      const w = getWeek(day);
+      if (!weekScores[w]) weekScores[w] = { done: 0, total: 0, days: 0, completeDays: 0 };
+      weekScores[w].done += c.done;
+      weekScores[w].total += c.total;
+      weekScores[w].days++;
+      if (c.pct === 100) {
+        completedDays++;
+        tempStreak++;
+        weekScores[w].completeDays++;
+      } else if (c.pct > 0) {
+        partialDays++;
+        tempStreak = 0;
+      } else {
+        tempStreak = 0;
+      }
+      if (tempStreak > bestStreak) bestStreak = tempStreak;
+    });
+
+    // Current streak: count backwards from today
+    currentStreak = 0;
+    for (let i = planDays.length - 1; i >= 0; i--) {
+      const c = getDayCompletion(planDays[i]);
+      if (c.pct === 100) currentStreak++;
+      else break;
+    }
+
+    // Best week
+    let bestWeekNum = 1, bestWeekPct = 0;
+    Object.entries(weekScores).forEach(([w, s]) => {
+      const p = s.total > 0 ? Math.round((s.done / s.total) * 100) : 0;
+      if (p > bestWeekPct) { bestWeekPct = p; bestWeekNum = parseInt(w); }
+    });
+
+    const totalPlanDays = planDays.length;
+    const overallPct = totalPlanDays > 0 ? Math.round((completedDays / totalPlanDays) * 100) : 0;
+
+    return { currentStreak, bestStreak, completedDays, partialDays, totalPlanDays, overallPct, bestWeekNum, bestWeekPct };
+  }, [checks, today, getDayCompletion]);
+
+  if (!ready) return null;
+
+  // === SPLASH SCREEN ===
+  if (splash) {
+    const progress = Math.max(0, Math.min(100, Math.round(((77 - daysTo(today)) / 77) * 100)));
+    return (
+      <div style={{
+        minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+        background:dark
+          ?'radial-gradient(circle at 50% 40%, #1e1428 0%, #111114 70%)'
+          :'radial-gradient(circle at 50% 40%, #FFF0E8 0%, #F6F5F1 70%)',
+        color:dark?'#f0f0f4':'#1a1a1a',
+        fontFamily:"'Outfit', sans-serif",
+        padding:24,textAlign:'center',
+        animation:'fadeIn 0.6s ease',
+      }}>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+          @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+          @keyframes countUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+          @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        `}</style>
+        <div style={{ fontSize:56,marginBottom:16,animation:'countUp 0.8s ease 0.2s both' }}>🎧</div>
+        <div style={{
+          fontFamily:"'JetBrains Mono'",fontSize:10,fontWeight:600,
+          letterSpacing:4,textTransform:'uppercase',
+          color:dark?'#FF6B4A':'#E8553A',marginBottom:12,
+          animation:'countUp 0.8s ease 0.4s both',
+        }}>Road to Dekmantel</div>
+        <div style={{
+          fontSize:52,fontWeight:900,lineHeight:1,marginBottom:6,
+          animation:'countUp 0.8s ease 0.6s both',
+          background:`linear-gradient(135deg, ${dark?'#FF6B4A':'#E8553A'}, ${dark?'#FF4F8A':'#D94F7A'})`,
+          WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',
+        }}>{daysTo(today)}</div>
+        <div style={{
+          fontSize:14,fontWeight:600,color:dark?'#6a6a78':'#8a8a8a',
+          animation:'countUp 0.8s ease 0.8s both',marginBottom:24,
+        }}>días para Amsterdam</div>
+        <div style={{
+          width:180,height:4,borderRadius:4,overflow:'hidden',
+          background:dark?'#222228':'#eae8e4',
+          animation:'countUp 0.8s ease 1s both',
+        }}>
+          <div style={{
+            height:'100%',borderRadius:4,width:`${progress}%`,
+            background:`linear-gradient(90deg, ${dark?'#FF6B4A':'#E8553A'}, ${dark?'#FF4F8A':'#D94F7A'})`,
+            backgroundSize:'200% 100%',
+            animation:'shimmer 1.5s linear infinite',
+          }}/>
+        </div>
+        <div style={{
+          fontSize:11,color:dark?'#6a6a78':'#8a8a8a',marginTop:8,
+          fontFamily:"'JetBrains Mono'",
+          animation:'countUp 0.8s ease 1.2s both',
+        }}>{progress}% del camino recorrido</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: t.bg,
+      color: t.text,
+      fontFamily: "'Outfit', sans-serif",
+      transition: 'background 0.4s, color 0.4s',
+      opacity: anim ? 1 : 0,
+      transform: anim ? 'none' : 'translateY(8px)',
+      transitionProperty: 'opacity, transform, background, color',
+      transitionDuration: '0.5s',
+      paddingBottom: 50,
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+        @keyframes checkPop { 0%{transform:scale(0.8)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+        @keyframes glow { 0%,100%{box-shadow:0 0 20px ${t.accent}22} 50%{box-shadow:0 0 30px ${t.accent}44} }
+      `}</style>
+
+      {/* === MASSIVE HERO === */}
+      <div style={{
+        background: t.heroBg,
+        padding: '0 0 0',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Decorative blobs */}
+        <div style={{ position:'absolute',top:-60,right:-50,width:220,height:220,borderRadius:'50%',background:t.accent,opacity:0.07,filter:'blur(40px)' }}/>
+        <div style={{ position:'absolute',bottom:-40,left:-40,width:180,height:180,borderRadius:'50%',background:t.accent2,opacity:0.06,filter:'blur(30px)' }}/>
+        <div style={{ position:'absolute',top:'30%',left:'50%',width:300,height:300,borderRadius:'50%',background:t.accent,opacity:0.03,filter:'blur(60px)',transform:'translateX(-50%)' }}/>
+
+        {/* Top bar: logo + controls */}
+        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 20px 0',position:'relative',zIndex:2 }}>
+          <div style={{ fontFamily:"'JetBrains Mono'",fontSize:10,fontWeight:600,letterSpacing:3,textTransform:'uppercase',color:t.accent }}>
+            Road to Dekmantel
+          </div>
+          <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+            <button onClick={()=>setShowSettings(!showSettings)} style={{
+              width:30,height:30,borderRadius:10,border:`1px solid ${t.border}`,
+              background:showSettings?`${t.accent}18`:'transparent',
+              cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:14,color:showSettings?t.accent:t.textMuted,transition:'all 0.2s',
+            }}>⚙</button>
+            <button onClick={()=>setDark(!dark)} style={{
+              width:42,height:26,borderRadius:13,border:'none',
+              background:dark?'#3a3a4a':t.toggleBg,
+              position:'relative',cursor:'pointer',transition:'background 0.3s',
+            }}>
+              <div style={{
+                width:20,height:20,borderRadius:'50%',
+                background:dark?'#ffd43b':'#fff',
+                position:'absolute',top:3,left:dark?19:3,
+                transition:'left 0.3s',
+                boxShadow:'0 1px 4px rgba(0,0,0,0.25)',
+                display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,
+              }}>{dark?'☀':'🌙'}</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Hero center content */}
+        <div style={{ padding:'20px 20px 0',position:'relative',zIndex:2 }}>
+          {/* Date nav row */}
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16 }}>
+            <button onClick={()=>go(-1)} style={navStyle(t)}>‹</button>
+            <div style={{ textAlign:'center' }}>
+              {isToday ? (
+                <div style={{
+                  display:'inline-block',
+                  background:`linear-gradient(135deg, ${t.accent}, ${t.accent2})`,
+                  color:'#fff',fontSize:11,fontWeight:800,
+                  padding:'4px 16px',borderRadius:20,
+                  letterSpacing:2,textTransform:'uppercase',
+                  marginBottom:4,
+                }}>✦ HOY ✦</div>
+              ) : (
+                <div>
+                  <div style={{ fontSize:11,fontWeight:600,color:t.textMuted,letterSpacing:1,textTransform:'uppercase',marginBottom:4 }}>
+                    {sel.toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}
+                  </div>
+                  <button onClick={()=>setSel(new Date())} style={{
+                    background:`${t.accent}14`,border:`1px solid ${t.accent}33`,
+                    borderRadius:12,padding:'3px 12px',cursor:'pointer',
+                    fontSize:10,fontWeight:700,color:t.accent,
+                    fontFamily:"'JetBrains Mono'",letterSpacing:1,
+                  }}>← IR A HOY</button>
+                </div>
+              )}
+            </div>
+            <button onClick={()=>go(1)} style={navStyle(t)}>›</button>
+          </div>
+
+          {/* Big day name + workout type */}
+          <div style={{ textAlign:'center',marginBottom:8 }}>
+            <h1 style={{ margin:0,fontSize:42,fontWeight:900,lineHeight:1,color:t.heroTitle,letterSpacing:-1 }}>
+              {DAYS_FULL[dow]}
+            </h1>
+            <div style={{
+              display:'inline-flex',alignItems:'center',gap:8,
+              marginTop:10,padding:'8px 20px',
+              background:t.workoutPillBg,
+              borderRadius:30,
+              border:`1.5px solid ${t.workoutPillBorder}`,
+            }}>
+              <span style={{ fontSize:22 }}>{wo.ic}</span>
+              <span style={{ fontSize:14,fontWeight:700,color:t.text }}>{wo.l}</span>
+              <span style={{ fontSize:11,color:t.textMuted,fontWeight:500 }}>·</span>
+              <PhaseBadge ph={ph} t={t} />
+            </div>
+          </div>
+
+          {/* Progress ring + countdown row */}
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:28,margin:'22px 0 6px' }}>
+            {/* Progress Ring */}
+            <div style={{ position:'relative',width:100,height:100 }}>
+              <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform:'rotate(-90deg)' }}>
+                <circle cx="50" cy="50" r="42" fill="none" stroke={t.progressBg} strokeWidth="7" />
+                <circle cx="50" cy="50" r="42" fill="none"
+                  stroke={pct===100?'#22c55e':t.accent}
+                  strokeWidth="7" strokeLinecap="round"
+                  strokeDasharray={`${2*Math.PI*42}`}
+                  strokeDashoffset={`${2*Math.PI*42*(1-pct/100)}`}
+                  style={{ transition:'stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)' }}
+                />
+              </svg>
+              <div style={{
+                position:'absolute',top:0,left:0,width:'100%',height:'100%',
+                display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+              }}>
+                <div style={{ fontFamily:"'JetBrains Mono'",fontSize:24,fontWeight:800,color:pct===100?'#22c55e':t.accent,lineHeight:1 }}>
+                  {pct}%
+                </div>
+                <div style={{ fontSize:9,fontWeight:600,color:t.textMuted,marginTop:2 }}>{done}/{total}</div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ width:1,height:60,background:t.border }} />
+
+            {/* Countdown block */}
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontFamily:"'JetBrains Mono'",fontSize:40,fontWeight:800,color:t.accent,lineHeight:1,
+                animation: left<=14?'glow 2s infinite':'none',
+              }}>
+                {left}
+              </div>
+              <div style={{ fontSize:10,fontWeight:700,color:t.textMuted,letterSpacing:1.5,textTransform:'uppercase',marginTop:4 }}>
+                días para
+              </div>
+              <div style={{ fontSize:12,fontWeight:800,color:t.accent,letterSpacing:1 }}>
+                DEKMANTEL
+              </div>
+            </div>
+          </div>
+
+          {/* Day counter */}
+          <div style={{ textAlign:'center',marginBottom:4 }}>
+            <span style={{ fontFamily:"'JetBrains Mono'",fontSize:11,color:t.textMuted }}>
+              Día <span style={{ color:t.accent,fontWeight:700 }}>{Math.max(1,Math.min(77,Math.floor((sel-PLAN_START)/864e5)+1))}</span> de 77 · Semana {wk}/11
+            </span>
+          </div>
+        </div>
+
+        {/* Quote banner */}
+        <div style={{
+          margin:'12px 16px 0',padding:'12px 16px',
+          background:t.quoteBg,
+          borderRadius:14,
+          border:`1px solid ${t.quoteBorder}`,
+          fontSize:13,fontWeight:500,
+          color:t.quoteText,
+          fontStyle:'italic',
+          textAlign:'center',
+          position:'relative',zIndex:2,
+        }}>
+          "{quote}"
+        </div>
+
+        {/* Week strip */}
+        <div style={{ display:'flex',gap:3,padding:'14px 12px 16px',position:'relative',zIndex:2 }}>
+          {weekDots.map((wd,i) => {
+            const complete = wd.done>=wd.total;
+            const partial = wd.done>0 && !complete;
+            const isTodayDot = wd.isToday;
+            return (
+              <button key={i} onClick={()=>setSel(wd.date)} style={{
+                flex:1,border:'none',cursor:'pointer',
+                background:wd.isSel?t.weekSelBg:'transparent',
+                borderRadius:14,padding:'6px 2px 8px',
+                transition:'all 0.2s',
+                outline:wd.isSel?`2px solid ${t.accent}55`:'none',
+                position:'relative',
+              }}>
+                {isTodayDot && !wd.isSel && <div style={{
+                  position:'absolute',top:2,right:'50%',transform:'translateX(50%)',
+                  width:4,height:4,borderRadius:'50%',background:t.accent,
+                }}/>}
+                <div style={{
+                  fontSize:10,fontWeight:700,
+                  color:wd.isSel?t.accent:isTodayDot?t.accent:t.textMuted,
+                  fontFamily:"'JetBrains Mono'",marginBottom:3,
+                }}>{DAYS[i]}</div>
+                <div style={{
+                  fontSize:16,fontWeight:wd.isSel?800:isTodayDot?700:500,
+                  color:wd.isSel?t.accent:isTodayDot?t.text:t.textMuted,
+                  marginBottom:5,
+                }}>{wd.date.getDate()}</div>
+                <div style={{
+                  width:8,height:8,borderRadius:'50%',margin:'0 auto',
+                  background:complete?'#22c55e':partial?t.accent:t.dotEmpty,
+                  transition:'background 0.3s',
+                  boxShadow:complete?'0 0 6px #22c55e44':'none',
+                }}/>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* === VIEW TABS === */}
+      <div style={{
+        display:'flex',gap:4,padding:'10px 16px',
+        background:t.stripBg,borderBottom:`1px solid ${t.border}`,
+      }}>
+        {[['daily','📋 Mi Día'],['calendar','📅 Progreso'],['metrics','📏 Métricas']].map(([v,label])=>(
+          <button key={v} onClick={()=>setView(v)} style={{
+            flex:1,padding:'10px 0',border:'none',cursor:'pointer',
+            borderRadius:12,fontSize:13,fontWeight:view===v?700:500,
+            background:view===v?`${t.accent}14`:'transparent',
+            color:view===v?t.accent:t.textMuted,
+            transition:'all 0.2s',
+            outline:view===v?`2px solid ${t.accent}33`:'none',
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {/* === SETTINGS PANEL === */}
+      {showSettings && (
+        <div style={{ padding:'10px 16px 0' }}>
+          <Section t={t}>
+            <div style={{ fontSize:14,fontWeight:700,marginBottom:14,display:'flex',alignItems:'center',gap:8 }}>
+              <span>⚙</span> Configuración
+            </div>
+            <div style={{ fontSize:12,fontWeight:600,color:t.textMuted,marginBottom:8 }}>Horarios de comida</div>
+            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12 }}>
+              {[['almuerzo','Almuerzo'],['snack','Snack'],['cena','Cena']].map(([k,label])=>(
+                <div key={k}>
+                  <div style={{ fontSize:10,fontWeight:600,color:t.textMuted,marginBottom:4 }}>{label}</div>
+                  <input type="time" value={mealTimes[k]}
+                    onChange={e=>setMealTimes(p=>({...p,[k]:e.target.value}))}
+                    style={{
+                      width:'100%',padding:'8px 6px',borderRadius:8,
+                      border:`1.5px solid ${t.border}`,background:t.bg,
+                      color:t.text,fontSize:13,fontFamily:"'JetBrains Mono'",
+                      outline:'none',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize:10,color:t.textMuted,fontStyle:'italic' }}>
+              Los horarios se usan para mostrar las comidas en tu vista diaria.
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {/* === DAILY VIEW === */}
+      {view==='daily' && <>
+
+      {/* Week overview mini */}
+      <div style={{ padding:'14px 16px 4px',display:'flex',gap:4 }}>
+        {weekDots.map((wd,i)=>{
+          const comp=wd.done>=wd.total;
+          const part=wd.done>0&&!comp;
+          return (
+            <div key={i} style={{
+              flex:1,height:4,borderRadius:4,
+              background:comp?'#22c55e':part?t.accent:t.progressBg,
+              opacity:wd.isSel?1:0.5,
+              transition:'all 0.3s',
+            }}/>
+          );
+        })}
+      </div>
+
+      {/* === WORKOUT CARD === */}
+      <div style={{height:6}}/>
+      <Section t={t}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14,
+        }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 14,
+            background: `linear-gradient(135deg, ${t.accent}22, ${t.accent2}22)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 26, border: `1px solid ${t.accent}33`,
+          }}>
+            {wo.ic}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: 0.5 }}>{wo.l}</div>
+            <div style={{ fontSize: 11, color: t.textMuted, fontWeight: 500 }}>{wo.tag}</div>
+          </div>
+        </div>
+
+        {exs.map((ex, i) => (
+          <ExRow key={i} ex={ex} checked={dc[`e${i}`]} onTog={() => tog(`e${i}`)} t={t} idx={i} />
+        ))}
+      </Section>
+
+      {/* === NUTRITION === */}
+      <Section t={t}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 14,
+            background: 'linear-gradient(135deg, #22c55e22, #4ade8022)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 24, border: '1px solid #22c55e33',
+          }}>🍽️</div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800 }}>ALIMENTACIÓN</div>
+            <div style={{ fontSize: 11, color: t.textMuted }}>{dow < 5 ? `Ventana ${mealTimes.almuerzo} – ${mealTimes.cena.replace(':00',':00')} + 1h` : 'Fin de semana — horario libre'}</div>
+          </div>
+        </div>
+
+        <MealRow icon={alm.i} time={mealTimes.almuerzo} label="Almuerzo" desc={alm.n} checked={dc.alm} onTog={() => tog('alm')} t={t} />
+        <MealRow icon={snk.i} time={mealTimes.snack} label="Snack" desc={snk.n} checked={dc.snk} onTog={() => tog('snk')} t={t} />
+        <MealRow icon={cen.i} time={mealTimes.cena} label="Cena" desc={cen.n} checked={dc.cen} onTog={() => tog('cen')} t={t} />
+      </Section>
+
+      {/* === HABITS === */}
+      <Section t={t}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 14,
+            background: 'linear-gradient(135deg, #f59e0b22, #eab30822)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 24, border: '1px solid #f59e0b33',
+          }}>⚡</div>
+          <div style={{ fontSize: 16, fontWeight: 800 }}>HÁBITOS</div>
+        </div>
+
+        <HabitRow icon="⏰" label="Ayuno 16:8 cumplido" sub="Última comida antes de 8pm" checked={dc.ay} onTog={() => tog('ay')} t={t} />
+        {dow >= 5 && <div style={{ padding:'6px 4px',borderTop:`1px solid ${t.border}`,fontSize:11,color:t.textMuted,fontStyle:'italic' }}>☀️ Fin de semana: ayuno libre. Come bien y disfruta.</div>}
+        <HabitRow icon="💧" label="Hidratación 2-3L" sub="Agua durante todo el día" checked={dc.ag} onTog={() => tog('ag')} t={t} />
+        <HabitRow icon="🥩" label="Proteína en cada comida" sub="Pollo, huevo, atún, legumbres, lácteos" checked={dc.prot} onTog={() => tog('prot')} t={t} />
+      </Section>
+
+      {/* === NOTES === */}
+      <Section t={t}>
+        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10 }}>
+          <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+            <span style={{ fontSize:18 }}>📝</span>
+            <span style={{ fontSize:14,fontWeight:700 }}>Notas del día</span>
+          </div>
+          {!editingNote && (
+            <button onClick={()=>{setNoteText(notes[key]||'');setEditingNote(true)}} style={{
+              padding:'5px 12px',borderRadius:8,border:`1px solid ${t.border}`,
+              background:'transparent',color:t.accent,fontSize:11,fontWeight:600,
+              cursor:'pointer',
+            }}>{notes[key]?'Editar':'+ Agregar'}</button>
+          )}
+        </div>
+        {editingNote ? (
+          <div>
+            <textarea
+              value={noteText}
+              onChange={e=>setNoteText(e.target.value)}
+              placeholder="¿Cómo te sentiste hoy? ¿Algo que ajustar?"
+              rows={3}
+              style={{
+                width:'100%',padding:'10px 12px',borderRadius:10,
+                border:`1.5px solid ${t.border}`,background:t.bg,
+                color:t.text,fontSize:13,fontFamily:"'Outfit', sans-serif",
+                outline:'none',resize:'vertical',lineHeight:1.5,
+              }}
+              onFocus={e=>e.target.style.borderColor=t.accent}
+              onBlur={e=>e.target.style.borderColor=t.border}
+            />
+            <div style={{ display:'flex',gap:6,marginTop:8 }}>
+              <button onClick={()=>{
+                if(noteText.trim()){setNotes(p=>({...p,[key]:noteText.trim()}))}
+                else{setNotes(p=>{const n={...p};delete n[key];return n})}
+                setEditingNote(false);
+              }} style={{
+                flex:1,padding:'10px',borderRadius:10,border:'none',
+                background:'#22c55e',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',
+              }}>Guardar</button>
+              <button onClick={()=>setEditingNote(false)} style={{
+                padding:'10px 16px',borderRadius:10,border:`1px solid ${t.border}`,
+                background:'transparent',color:t.textMuted,fontSize:12,fontWeight:600,cursor:'pointer',
+              }}>×</button>
+            </div>
+          </div>
+        ) : notes[key] ? (
+          <div style={{
+            padding:'10px 12px',borderRadius:10,
+            background:dark?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.02)',
+            fontSize:13,color:t.text,lineHeight:1.5,
+            whiteSpace:'pre-wrap',
+          }}>{notes[key]}</div>
+        ) : (
+          <div style={{ fontSize:12,color:t.textMuted,fontStyle:'italic' }}>
+            Sin notas para este día. Toca "+ Agregar" para escribir cómo te fue.
+          </div>
+        )}
+      </Section>
+
+      {/* === COMPLETION === */}
+      {pct === 100 && (
+        <div style={{
+          margin: '0 16px',
+          background: dark
+            ? 'linear-gradient(135deg, #22c55e12, #4ade8008)'
+            : 'linear-gradient(135deg, #f0fdf4, #ecfdf5)',
+          border: `2px solid #22c55e44`,
+          borderRadius: 20,
+          padding: 24,
+          textAlign: 'center',
+          animation: 'slideUp 0.5s ease',
+        }}>
+          <div style={{ fontSize: 44, animation: 'pulse 1s infinite' }}>🎉</div>
+          <div style={{ fontWeight: 800, fontSize: 20, color: '#22c55e', marginTop: 8 }}>
+            ¡Día completo!
+          </div>
+          <div style={{ fontSize: 13, color: t.textMuted, marginTop: 6, lineHeight: 1.5 }}>
+            Un día menos para el dancefloor en Amsterdamsche Bos.
+            <br />Sigue así, vas con todo 🔥
+          </div>
+        </div>
+      )}
+      </>}
+
+      {/* === CALENDAR VIEW === */}
+      {view==='calendar' && <>
+
+      {/* Stats cards */}
+      <div style={{ padding:'14px 16px 0' }}>
+        <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12 }}>
+          <StatCard t={t} icon="🔥" value={stats.currentStreak} unit="días" label="Racha actual" color={t.accent} />
+          <StatCard t={t} icon="🏆" value={stats.bestStreak} unit="días" label="Mejor racha" color="#f59e0b" />
+          <StatCard t={t} icon="✅" value={stats.completedDays} unit={`/${stats.totalPlanDays}`} label="Días completos" color="#22c55e" />
+          <StatCard t={t} icon="📊" value={stats.overallPct} unit="%" label="Cumplimiento" color={t.accent2} />
+        </div>
+      </div>
+
+      {/* Phase timeline */}
+      <div style={{ padding:'0 16px 10px' }}>
+        <Section t={t}>
+          <div style={{ fontSize:13,fontWeight:700,marginBottom:12 }}>FASES DEL PLAN</div>
+          <div style={{ display:'flex',gap:6 }}>
+            {[
+              { n:'Adaptación',w:'S1-3',c:'#22c55e',s:1,e:3 },
+              { n:'Intensificación',w:'S4-7',c:t.accent,s:4,e:7 },
+              { n:'Consolidación',w:'S8-11',c:'#f59e0b',s:8,e:11 },
+            ].map((p,i)=>{
+              const active = wk>=p.s && wk<=p.e;
+              const past = wk>p.e;
+              return (
+                <div key={i} style={{
+                  flex:i===1?4:3,
+                  background:active?`${p.c}18`:past?`${p.c}0a`:'transparent',
+                  border:`1.5px solid ${active?p.c+'66':past?p.c+'33':t.border}`,
+                  borderRadius:12,padding:'10px 8px',textAlign:'center',
+                  transition:'all 0.3s',
+                  position:'relative',overflow:'hidden',
+                }}>
+                  {active && <div style={{
+                    position:'absolute',top:0,left:0,right:0,height:3,
+                    background:`linear-gradient(90deg, ${p.c}, ${p.c}88)`,
+                  }}/>}
+                  <div style={{ fontSize:11,fontWeight:800,color:active?p.c:past?p.c+'99':t.textMuted }}>{p.n}</div>
+                  <div style={{ fontFamily:"'JetBrains Mono'",fontSize:9,color:t.textMuted,marginTop:2 }}>{p.w}</div>
+                  {past && <div style={{ fontSize:9,color:p.c,marginTop:3 }}>✓</div>}
+                  {active && <div style={{ fontSize:9,color:p.c,marginTop:3,fontWeight:700 }}>ACTIVA</div>}
+                </div>
+              );
+            })}
+          </div>
+        </Section>
+      </div>
+
+      {/* Calendar */}
+      <div style={{ padding:'0 16px' }}>
+        <Section t={t}>
+          {/* Month nav */}
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14 }}>
+            <button onClick={()=>{const d=new Date(calMonth);d.setMonth(d.getMonth()-1);setCalMonth(d)}} style={calNavBtn(t)}>‹</button>
+            <div style={{ fontWeight:800,fontSize:16,textTransform:'capitalize' }}>
+              {calMonth.toLocaleDateString('es-CO',{month:'long',year:'numeric'})}
+            </div>
+            <button onClick={()=>{const d=new Date(calMonth);d.setMonth(d.getMonth()+1);setCalMonth(d)}} style={calNavBtn(t)}>›</button>
+          </div>
+
+          {/* Day headers */}
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:6 }}>
+            {DAYS.map(d=>(
+              <div key={d} style={{
+                textAlign:'center',fontSize:10,fontWeight:700,
+                color:t.textMuted,fontFamily:"'JetBrains Mono'",padding:'4px 0',
+              }}>{d}</div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:3 }}>
+            {calendarDays.map((cd,i) => {
+              if(!cd) return <div key={`e${i}`}/>;
+              const c = cd.comp;
+              const full = c && c.pct===100;
+              const partial = c && c.pct>0 && c.pct<100;
+              const future = cd.date > today;
+              const isPlanDay = cd.inPlan && !future;
+              return (
+                <button key={i} onClick={()=>{setSel(cd.date);setView('daily')}} style={{
+                  aspectRatio:'1',border:'none',cursor:cd.inPlan?'pointer':'default',
+                  borderRadius:10,fontSize:13,fontWeight:cd.isToday?800:500,
+                  position:'relative',
+                  background:cd.isToday
+                    ? `linear-gradient(135deg, ${t.accent}, ${t.accent2})`
+                    : full ? '#22c55e18'
+                    : partial ? `${t.accent}0c`
+                    : 'transparent',
+                  color:cd.isToday?'#fff':cd.inPlan?t.text:t.textMuted+'66',
+                  transition:'all 0.15s',
+                  outline:cd.isToday?`2px solid ${t.accent}`:'none',
+                  display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,
+                }}>
+                  <span>{cd.day}</span>
+                  {isPlanDay && (
+                    <div style={{
+                      width:6,height:6,borderRadius:'50%',
+                      background:full?'#22c55e':partial?t.accent:'transparent',
+                      border:full||partial?'none':`1.5px solid ${t.dotEmpty}`,
+                      boxShadow:full?'0 0 4px #22c55e44':'none',
+                    }}/>
+                  )}
+                  {future && cd.inPlan && (
+                    <div style={{ width:6,height:6,borderRadius:'50%',border:`1.5px solid ${t.border}` }}/>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div style={{ display:'flex',gap:16,justifyContent:'center',marginTop:14,flexWrap:'wrap' }}>
+            {[
+              {c:'#22c55e',l:'Completo'},
+              {c:t.accent,l:'Parcial'},
+              {c:t.dotEmpty,l:'Sin datos',border:true},
+            ].map((lg,i)=>(
+              <div key={i} style={{ display:'flex',alignItems:'center',gap:5 }}>
+                <div style={{
+                  width:8,height:8,borderRadius:'50%',
+                  background:lg.border?'transparent':lg.c,
+                  border:lg.border?`1.5px solid ${lg.c}`:'none',
+                }}/>
+                <span style={{ fontSize:10,color:t.textMuted,fontWeight:500 }}>{lg.l}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      </div>
+
+      {/* Weekly breakdown */}
+      <div style={{ padding:'0 16px' }}>
+        <Section t={t}>
+          <div style={{ fontSize:13,fontWeight:700,marginBottom:12 }}>RESUMEN SEMANAL</div>
+          {Array.from({length:11},(_,i)=>i+1).map(weekN=>{
+            const weekPlanDays=[];
+            for(let d=0;d<7;d++){
+              const date=new Date(PLAN_START);
+              date.setDate(date.getDate()+(weekN-1)*7+d);
+              if(date<=DEKMANTEL) weekPlanDays.push(date);
+            }
+            const weekDone=weekPlanDays.reduce((a,d)=>{
+              const c=getDayCompletion(d);
+              return a+(c.pct===100?1:0);
+            },0);
+            const weekTotal=weekPlanDays.length;
+            const weekPct=weekTotal>0?Math.round((weekDone/weekTotal)*100):0;
+            const isCurrent=weekN===wk;
+            const isPast=weekN<wk;
+            const phaseN=getPhase(weekN);
+            const phaseColors=['#22c55e',t.accent,'#f59e0b'];
+            return (
+              <div key={weekN} style={{
+                display:'flex',alignItems:'center',gap:10,
+                padding:'8px 4px',
+                borderTop:weekN===1?'none':`1px solid ${t.border}`,
+                opacity:!isPast&&!isCurrent?0.5:1,
+              }}>
+                <div style={{
+                  width:8,height:8,borderRadius:'50%',flexShrink:0,
+                  background:isCurrent?phaseColors[phaseN]:isPast?phaseColors[phaseN]+'66':'transparent',
+                  border:isCurrent?`2px solid ${phaseColors[phaseN]}`:`1.5px solid ${isPast?phaseColors[phaseN]+'44':t.border}`,
+                  boxShadow:isCurrent?`0 0 8px ${phaseColors[phaseN]}44`:'none',
+                }}/>
+                <div style={{ flex:1,minWidth:0 }}>
+                  <div style={{ fontSize:12,fontWeight:isCurrent?700:500 }}>
+                    Semana {weekN}
+                    {isCurrent && <span style={{
+                      fontSize:9,fontWeight:700,color:t.accent,
+                      background:`${t.accent}14`,padding:'1px 6px',borderRadius:4,marginLeft:6,
+                    }}>ACTUAL</span>}
+                  </div>
+                </div>
+                <div style={{ display:'flex',alignItems:'center',gap:6,flexShrink:0 }}>
+                  <div style={{
+                    width:50,height:5,borderRadius:5,background:t.progressBg,overflow:'hidden',
+                  }}>
+                    <div style={{
+                      height:'100%',borderRadius:5,
+                      width:`${weekPct}%`,
+                      background:weekPct===100?'#22c55e':phaseColors[phaseN],
+                      transition:'width 0.4s',
+                    }}/>
+                  </div>
+                  <span style={{
+                    fontFamily:"'JetBrains Mono'",fontSize:10,fontWeight:600,
+                    color:weekPct===100?'#22c55e':isPast||isCurrent?t.text:t.textMuted,
+                    minWidth:28,textAlign:'right',
+                  }}>
+                    {isPast||isCurrent?`${weekPct}%`:'—'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </Section>
+      </div>
+
+      </>}
+
+      {/* === METRICS VIEW === */}
+      {view==='metrics' && <MetricsView
+        t={t} dark={dark} metrics={metrics} setMetrics={setMetrics}
+        metricForm={metricForm} setMetricForm={setMetricForm}
+        showMetricForm={showMetricForm} setShowMetricForm={setShowMetricForm}
+        today={today}
+      />}
+    </div>
+  );
+}
+
+// ====== METRICS VIEW ======
+
+function MetricsView({ t, dark, metrics, setMetrics, metricForm, setMetricForm, showMetricForm, setShowMetricForm, today }) {
+  const todayKey = dk(today);
+  const hasToday = !!metrics[todayKey];
+
+  // Sorted entries for charts
+  const entries = useMemo(() =>
+    Object.entries(metrics)
+      .map(([k,v])=>({date:k,...v}))
+      .sort((a,b)=>a.date.localeCompare(b.date)),
+  [metrics]);
+
+  const saveMetric = () => {
+    const data = {};
+    if (metricForm.weight) data.weight = parseFloat(metricForm.weight);
+    if (metricForm.waist) data.waist = parseFloat(metricForm.waist);
+    if (metricForm.chest) data.chest = parseFloat(metricForm.chest);
+    if (metricForm.arm) data.arm = parseFloat(metricForm.arm);
+    data.energy = metricForm.energy;
+    if (Object.keys(data).length > 0) {
+      setMetrics(prev => ({ ...prev, [todayKey]: { ...(prev[todayKey]||{}), ...data } }));
+      setShowMetricForm(false);
+    }
+  };
+
+  const deleteEntry = (key) => {
+    setMetrics(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  // Latest values
+  const latest = entries.length > 0 ? entries[entries.length - 1] : null;
+  const first = entries.length > 0 ? entries[0] : null;
+
+  // Diffs
+  const diff = (field) => {
+    if (!latest || !first || !latest[field] || !first[field]) return null;
+    return (latest[field] - first[field]).toFixed(1);
+  };
+
+  return (
+    <div style={{ padding: '14px 0 0' }}>
+
+      {/* Add / Update button */}
+      <div style={{ padding: '0 16px 10px' }}>
+        <button onClick={() => {
+          if (hasToday) {
+            const td = metrics[todayKey];
+            setMetricForm({
+              weight: td.weight?.toString() || '',
+              waist: td.waist?.toString() || '',
+              chest: td.chest?.toString() || '',
+              arm: td.arm?.toString() || '',
+              energy: td.energy || 5,
+            });
+          } else {
+            setMetricForm({ weight:'', waist:'', chest:'', arm:'', energy:5 });
+          }
+          setShowMetricForm(!showMetricForm);
+        }} style={{
+          width: '100%', padding: '14px', border: 'none', borderRadius: 14,
+          background: `linear-gradient(135deg, ${t.accent}, ${t.accent2})`,
+          color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>
+          <span style={{ fontSize: 18 }}>{hasToday ? '✏️' : '➕'}</span>
+          {hasToday ? 'Actualizar registro de hoy' : 'Registrar métricas de hoy'}
+        </button>
+      </div>
+
+      {/* Form */}
+      {showMetricForm && (
+        <div style={{ padding: '0 16px 10px' }}>
+          <Section t={t}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
+              📝 Registro — {today.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+              <MetricInput label="Peso (kg)" value={metricForm.weight} onChange={v => setMetricForm(p=>({...p,weight:v}))} icon="⚖️" t={t} />
+              <MetricInput label="Cintura (cm)" value={metricForm.waist} onChange={v => setMetricForm(p=>({...p,waist:v}))} icon="📏" t={t} />
+              <MetricInput label="Pecho (cm)" value={metricForm.chest} onChange={v => setMetricForm(p=>({...p,chest:v}))} icon="💪" t={t} />
+              <MetricInput label="Brazo (cm)" value={metricForm.arm} onChange={v => setMetricForm(p=>({...p,arm:v}))} icon="💪" t={t} />
+            </div>
+
+            {/* Energy slider */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: t.textMuted, marginBottom: 8 }}>
+                ⚡ Nivel de energía: <span style={{ color: t.accent, fontWeight: 800 }}>{metricForm.energy}/10</span>
+              </div>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+                  <button key={n} onClick={() => setMetricForm(p => ({ ...p, energy: n }))} style={{
+                    flex: 1, height: 32, border: 'none', borderRadius: 8, cursor: 'pointer',
+                    background: n <= metricForm.energy
+                      ? n <= 3 ? '#ef4444' : n <= 6 ? '#f59e0b' : '#22c55e'
+                      : t.progressBg,
+                    opacity: n <= metricForm.energy ? 1 : 0.4,
+                    transition: 'all 0.15s',
+                    fontSize: 10, fontWeight: 700, color: n <= metricForm.energy ? '#fff' : t.textMuted,
+                  }}>{n}</button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={saveMetric} style={{
+                flex: 1, padding: '12px', border: 'none', borderRadius: 12,
+                background: '#22c55e', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}>✓ Guardar</button>
+              <button onClick={() => setShowMetricForm(false)} style={{
+                padding: '12px 20px', border: `1px solid ${t.border}`, borderRadius: 12,
+                background: 'transparent', color: t.textMuted, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>Cancelar</button>
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {/* Summary cards */}
+      {latest && (
+        <div style={{ padding: '0 16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+            {[
+              { icon: '⚖️', label: 'Peso', val: latest.weight, unit: 'kg', d: diff('weight'), color: t.accent, downGood: true },
+              { icon: '📏', label: 'Cintura', val: latest.waist, unit: 'cm', d: diff('waist'), color: '#f59e0b', downGood: true },
+              { icon: '💪', label: 'Pecho', val: latest.chest, unit: 'cm', d: diff('chest'), color: '#22c55e', downGood: false },
+              { icon: '💪', label: 'Brazo', val: latest.arm, unit: 'cm', d: diff('arm'), color: t.accent2, downGood: false },
+            ].filter(m => m.val).map((m, i) => (
+              <div key={i} style={{
+                background: t.cardBg, border: `1px solid ${t.cardBorder}`,
+                borderRadius: 16, padding: '14px', boxShadow: t.cardShadow,
+              }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{m.icon}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 24, fontWeight: 800, color: m.color }}>{m.val}</span>
+                  <span style={{ fontSize: 11, color: t.textMuted, fontWeight: 600 }}>{m.unit}</span>
+                </div>
+                <div style={{ fontSize: 11, color: t.textMuted, fontWeight: 500, marginTop: 2 }}>{m.label}</div>
+                {m.d && entries.length > 1 && (
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, marginTop: 4,
+                    color: m.downGood
+                      ? (parseFloat(m.d) < 0 ? '#22c55e' : parseFloat(m.d) > 0 ? '#ef4444' : t.textMuted)
+                      : (parseFloat(m.d) > 0 ? '#22c55e' : parseFloat(m.d) < 0 ? '#ef4444' : t.textMuted),
+                    fontFamily: "'JetBrains Mono'",
+                  }}>
+                    {parseFloat(m.d) > 0 ? '+' : ''}{m.d} desde inicio
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Charts */}
+      {entries.length >= 2 && (
+        <div style={{ padding: '0 16px' }}>
+          {/* Weight chart */}
+          {entries.some(e => e.weight) && (
+            <Section t={t}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>⚖️</span> Tendencia de Peso
+              </div>
+              <MiniChart data={entries.filter(e=>e.weight).map(e=>({x:e.date,y:e.weight}))} color={t.accent} t={t} unit="kg" />
+            </Section>
+          )}
+
+          {/* Measurements chart */}
+          {entries.some(e => e.waist || e.chest || e.arm) && (
+            <Section t={t}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>📏</span> Tendencia de Medidas
+              </div>
+              {entries.some(e=>e.waist) && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: '#f59e0b', fontWeight: 600, marginBottom: 6 }}>Cintura (cm)</div>
+                  <MiniChart data={entries.filter(e=>e.waist).map(e=>({x:e.date,y:e.waist}))} color="#f59e0b" t={t} unit="cm" />
+                </div>
+              )}
+              {entries.some(e=>e.chest) && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 600, marginBottom: 6 }}>Pecho (cm)</div>
+                  <MiniChart data={entries.filter(e=>e.chest).map(e=>({x:e.date,y:e.chest}))} color="#22c55e" t={t} unit="cm" />
+                </div>
+              )}
+              {entries.some(e=>e.arm) && (
+                <div>
+                  <div style={{ fontSize: 11, color: t.accent2, fontWeight: 600, marginBottom: 6 }}>Brazo (cm)</div>
+                  <MiniChart data={entries.filter(e=>e.arm).map(e=>({x:e.date,y:e.arm}))} color={t.accent2} t={t} unit="cm" />
+                </div>
+              )}
+            </Section>
+          )}
+
+          {/* Energy chart */}
+          {entries.some(e => e.energy) && (
+            <Section t={t}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>⚡</span> Nivel de Energía
+              </div>
+              <MiniChart data={entries.filter(e=>e.energy).map(e=>({x:e.date,y:e.energy}))} color="#f59e0b" t={t} unit="/10" yMin={0} yMax={10} />
+            </Section>
+          )}
+        </div>
+      )}
+
+      {/* History */}
+      {entries.length > 0 && (
+        <div style={{ padding: '0 16px' }}>
+          <Section t={t}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>📋 Historial de registros</div>
+            {[...entries].reverse().map((e, i) => (
+              <div key={e.date} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 4px',
+                borderTop: i === 0 ? 'none' : `1px solid ${t.border}`,
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600 }}>
+                    {new Date(e.date + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
+                    {e.date === todayKey && <span style={{
+                      fontSize: 9, fontWeight: 700, color: t.accent,
+                      background: `${t.accent}14`, padding: '1px 6px', borderRadius: 4, marginLeft: 6,
+                    }}>HOY</span>}
+                  </div>
+                  <div style={{ fontSize: 10, color: t.textMuted, marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {e.weight && <span>⚖️ {e.weight}kg</span>}
+                    {e.waist && <span>📏 {e.waist}cm</span>}
+                    {e.chest && <span>💪 {e.chest}cm</span>}
+                    {e.arm && <span>💪 {e.arm}cm</span>}
+                    {e.energy && <span>⚡ {e.energy}/10</span>}
+                  </div>
+                </div>
+                <button onClick={() => deleteEntry(e.date)} style={{
+                  width: 28, height: 28, borderRadius: 8, border: `1px solid ${t.border}`,
+                  background: 'transparent', cursor: 'pointer', fontSize: 12,
+                  color: t.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>×</button>
+              </div>
+            ))}
+          </Section>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {entries.length === 0 && !showMetricForm && (
+        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Sin registros todavía</div>
+          <div style={{ fontSize: 13, color: t.textMuted, lineHeight: 1.5 }}>
+            Registra tu peso, medidas y nivel de energía para ver las tendencias a lo largo de las semanas.
+            Se recomienda pesar 1 vez por semana y medir cada 2 semanas.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetricInput({ label, value, onChange, icon, t }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, marginBottom: 4 }}>{icon} {label}</div>
+      <input
+        type="number" step="0.1" inputMode="decimal"
+        value={value} onChange={e => onChange(e.target.value)}
+        placeholder="—"
+        style={{
+          width: '100%', padding: '10px 12px', borderRadius: 10,
+          border: `1.5px solid ${t.border}`, background: t.bg,
+          color: t.text, fontSize: 16, fontWeight: 600,
+          fontFamily: "'JetBrains Mono'",
+          outline: 'none',
+        }}
+        onFocus={e => e.target.style.borderColor = t.accent}
+        onBlur={e => e.target.style.borderColor = t.border}
+      />
+    </div>
+  );
+}
+
+function MiniChart({ data, color, t, unit, yMin, yMax }) {
+  if (data.length < 2) return null;
+
+  const W = 280, H = 80, PAD = { t: 10, b: 20, l: 36, r: 10 };
+  const chartW = W - PAD.l - PAD.r;
+  const chartH = H - PAD.t - PAD.b;
+
+  const vals = data.map(d => d.y);
+  const minV = yMin !== undefined ? yMin : Math.min(...vals) - (Math.max(...vals) - Math.min(...vals)) * 0.15;
+  const maxV = yMax !== undefined ? yMax : Math.max(...vals) + (Math.max(...vals) - Math.min(...vals)) * 0.15;
+  const range = maxV - minV || 1;
+
+  const points = data.map((d, i) => ({
+    x: PAD.l + (i / (data.length - 1)) * chartW,
+    y: PAD.t + chartH - ((d.y - minV) / range) * chartH,
+  }));
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+  const areaD = pathD + ` L${points[points.length-1].x},${PAD.t+chartH} L${points[0].x},${PAD.t+chartH} Z`;
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+      {/* Grid lines */}
+      {[0, 0.5, 1].map(pct => {
+        const y = PAD.t + chartH * (1 - pct);
+        const val = (minV + range * pct).toFixed(1);
+        return (
+          <g key={pct}>
+            <line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} stroke={t.border} strokeWidth="0.5" />
+            <text x={PAD.l - 4} y={y + 3} textAnchor="end" fontSize="7" fill={t.textMuted} fontFamily="JetBrains Mono">{val}</text>
+          </g>
+        );
+      })}
+
+      {/* Area fill */}
+      <path d={areaD} fill={`${color}12`} />
+
+      {/* Line */}
+      <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Dots */}
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r="3.5" fill={color} stroke={t.cardBg} strokeWidth="1.5" />
+          {(i === 0 || i === points.length - 1) && (
+            <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="7" fontWeight="700" fill={color} fontFamily="JetBrains Mono">
+              {data[i].y}{unit}
+            </text>
+          )}
+        </g>
+      ))}
+
+      {/* Date labels */}
+      {data.length <= 8 ? data.map((d, i) => (
+        <text key={i} x={points[i].x} y={H - 4} textAnchor="middle" fontSize="6" fill={t.textMuted} fontFamily="JetBrains Mono">
+          {d.x.slice(5)}
+        </text>
+      )) : [0, Math.floor(data.length / 2), data.length - 1].map(i => (
+        <text key={i} x={points[i].x} y={H - 4} textAnchor="middle" fontSize="6" fill={t.textMuted} fontFamily="JetBrains Mono">
+          {data[i].x.slice(5)}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+// ====== COMPONENTS ======
+
+function Section({ t, children }) {
+  return (
+    <div style={{
+      margin: '0 16px 14px',
+      background: t.cardBg,
+      border: `1px solid ${t.cardBorder}`,
+      borderRadius: 20,
+      padding: '18px 16px',
+      boxShadow: t.cardShadow,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function PhaseBadge({ ph, t }) {
+  const labels = ["ADAPT", "INTENS", "CONSOL"];
+  const colors = ["#22c55e", t.accent, "#f59e0b"];
+  return (
+    <div style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+      color: colors[ph],
+      background: colors[ph] + '14',
+      border: `1px solid ${colors[ph]}33`,
+      borderRadius: 8, padding: '4px 10px',
+      fontFamily: "'JetBrains Mono'",
+    }}>
+      F{ph + 1}·{labels[ph]}
+    </div>
+  );
+}
+
+function ExRow({ ex, checked, onTog, t, idx }) {
+  return (
+    <div onClick={onTog} style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 4px',
+      cursor: 'pointer',
+      borderTop: idx === 0 ? 'none' : `1px solid ${t.border}`,
+      transition: 'background 0.15s',
+    }}>
+      <Checkbox checked={checked} t={t} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600,
+          opacity: checked ? 0.45 : 1,
+          textDecoration: checked ? 'line-through' : 'none',
+          transition: 'all 0.2s',
+        }}>
+          {ex.n}
+        </div>
+      </div>
+      <div style={{
+        fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 600,
+        color: t.accent, opacity: checked ? 0.4 : 0.8,
+        flexShrink: 0,
+      }}>
+        {ex.s}
+      </div>
+      {ex.r !== "—" && (
+        <div style={{
+          fontFamily: "'JetBrains Mono'", fontSize: 10,
+          color: t.textMuted, opacity: checked ? 0.3 : 0.6,
+          flexShrink: 0, width: 30, textAlign: 'right',
+        }}>
+          {ex.r}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MealRow({ icon, time, label, desc, checked, onTog, t }) {
+  return (
+    <div onClick={onTog} style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 4px',
+      borderTop: `1px solid ${t.border}`,
+      cursor: 'pointer',
+    }}>
+      <Checkbox checked={checked} t={t} />
+      <div style={{
+        width: 36, height: 36, borderRadius: 10,
+        background: t.mealIconBg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 20, flexShrink: 0,
+      }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, opacity: checked ? 0.45 : 1, textDecoration: checked ? 'line-through' : 'none' }}>{label}</span>
+          <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: t.textMuted }}>{time}</span>
+        </div>
+        <div style={{
+          fontSize: 11, color: t.textMuted, marginTop: 2, lineHeight: 1.3,
+          opacity: checked ? 0.4 : 1,
+        }}>
+          {desc}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HabitRow({ icon, label, sub, checked, onTog, t }) {
+  return (
+    <div onClick={onTog} style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 4px',
+      borderTop: `1px solid ${t.border}`,
+      cursor: 'pointer',
+    }}>
+      <Checkbox checked={checked} t={t} />
+      <span style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, opacity: checked ? 0.45 : 1, textDecoration: checked ? 'line-through' : 'none' }}>
+          {label}
+        </div>
+        <div style={{ fontSize: 11, color: t.textMuted, opacity: checked ? 0.4 : 1 }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+function Checkbox({ checked, t }) {
+  return (
+    <div style={{
+      width: 24, height: 24, borderRadius: 8, flexShrink: 0,
+      border: `2px solid ${checked ? '#22c55e' : t.checkBorder}`,
+      background: checked ? '#22c55e' : 'transparent',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transition: 'all 0.2s',
+      animation: checked ? 'checkPop 0.3s ease' : 'none',
+    }}>
+      {checked && <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>✓</span>}
+    </div>
+  );
+}
+
+function StatCard({ t, icon, value, unit, label, color }) {
+  return (
+    <div style={{
+      background: t.cardBg,
+      border: `1px solid ${t.cardBorder}`,
+      borderRadius: 16,
+      padding: '16px 14px',
+      boxShadow: t.cardShadow,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', top: -10, right: -10,
+        width: 50, height: 50, borderRadius: '50%',
+        background: color, opacity: 0.06,
+      }} />
+      <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+        <span style={{
+          fontFamily: "'JetBrains Mono'", fontSize: 28, fontWeight: 800,
+          color, lineHeight: 1,
+        }}>{value}</span>
+        <span style={{
+          fontFamily: "'JetBrains Mono'", fontSize: 12, fontWeight: 600,
+          color: t.textMuted,
+        }}>{unit}</span>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+
+const navStyle = t => ({
+  width: 40, height: 40, borderRadius: 12,
+  background: t.navBg, border: `1px solid ${t.border}`,
+  color: t.text, fontSize: 22, fontWeight: 700,
+  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+  transition: 'all 0.15s',
+  backdropFilter: 'blur(8px)',
+});
+
+const calNavBtn = t => ({
+  width: 34, height: 34, borderRadius: 10,
+  background: t.cardBg, border: `1px solid ${t.border}`,
+  color: t.text, fontSize: 18, fontWeight: 700,
+  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+});
+
+// ====== THEMES ======
+const themes = {
+  light: {
+    bg: '#F6F5F1',
+    text: '#1a1a1a',
+    textMuted: '#8a8a8a',
+    accent: '#E8553A',
+    accent2: '#D94F7A',
+    heroBg: 'linear-gradient(170deg, #FFF8F0 0%, #FFF0E8 30%, #FFEADF 60%, #F6F5F1 100%)',
+    heroTitle: '#1a1a1a',
+    toggleBg: '#e2e2e8',
+    workoutPillBg: 'rgba(255,255,255,0.85)',
+    workoutPillBorder: '#eae8e4',
+    countdownBg: '#FFF5F0',
+    quoteBg: 'rgba(232,85,58,0.05)',
+    quoteBorder: 'rgba(232,85,58,0.12)',
+    quoteText: '#c04a33',
+    weekSelBg: 'rgba(232,85,58,0.1)',
+    stripBg: '#FEFDFB',
+    border: '#eae8e4',
+    cardBg: '#FFFFFF',
+    cardBorder: '#eae8e4',
+    cardShadow: '0 2px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02)',
+    progressBg: '#eae8e4',
+    dotEmpty: '#ddd',
+    checkBorder: '#ccc',
+    navBg: 'rgba(255,255,255,0.7)',
+    mealIconBg: '#faf8f5',
+  },
+  dark: {
+    bg: '#111114',
+    text: '#e8e8ec',
+    textMuted: '#6a6a78',
+    accent: '#FF6B4A',
+    accent2: '#FF4F8A',
+    heroBg: 'linear-gradient(170deg, #1e1418 0%, #1a1220 30%, #151318 60%, #111114 100%)',
+    heroTitle: '#f0f0f4',
+    toggleBg: '#3a3a4a',
+    workoutPillBg: 'rgba(255,255,255,0.06)',
+    workoutPillBorder: 'rgba(255,255,255,0.1)',
+    countdownBg: '#1c1a1e',
+    quoteBg: 'rgba(255,107,74,0.06)',
+    quoteBorder: 'rgba(255,107,74,0.15)',
+    quoteText: '#ff8a6a',
+    weekSelBg: 'rgba(255,107,74,0.12)',
+    stripBg: '#141418',
+    border: '#222228',
+    cardBg: '#18181E',
+    cardBorder: '#222228',
+    cardShadow: '0 2px 16px rgba(0,0,0,0.3)',
+    progressBg: '#222228',
+    dotEmpty: '#333',
+    checkBorder: '#444',
+    navBg: 'rgba(28,28,34,0.8)',
+    mealIconBg: '#1e1e24',
+  },
+};
